@@ -9,6 +9,15 @@ import (
 	"github.com/PuerkitoBio/goquery"
 )
 
+type ExtractJob struct {
+	id          string
+	title       string
+	companyName string
+	location    string
+	salary      string
+	summary     string
+}
+
 func checkError(err error) {
 	if err != nil {
 		log.Fatal(err)
@@ -39,21 +48,39 @@ func GetPages(url string) int {
 	return pageLength
 }
 
-func GetPage(url string, index int) {
-	fmt.Println("===================================")
+func GetPage(url string, index int) []ExtractJob {
+	var jobs = []ExtractJob{}
 	resultUrl := url + "&start=" + strconv.Itoa(index*50)
 	res, err := http.Get(resultUrl)
 	checkError(err)
 	checkCode(res)
 	defer res.Body.Close()
+	fmt.Println("resultUrl!!!!", resultUrl)
 
 	// Load the html file
 	document, err := goquery.NewDocumentFromReader(res.Body)
-	document.Find(".tapItem").Each(func(index int, selection *goquery.Selection) {
-		fmt.Println("index", index)
-		card, err := selection.Html()
-		checkError(err)
-
-		fmt.Println("card", card)
+	document.Find(".tapItem").Each(func(index int, card *goquery.Selection) {
+		job := extractedJob(card)
+		jobs = append(jobs, job)
 	})
+	return jobs
+}
+
+func extractedJob(card *goquery.Selection) ExtractJob {
+	id, _ := card.Attr("data-jk")
+	title := card.Find(".jobTitle>span").Text()
+	companyName := card.Find(".companyName").Text()
+	location := card.Find(".companyLocation").Text()
+	summary := card.Find(".job-snippet").Text()
+	return ExtractJob{
+		id:          id,
+		title:       title,
+		companyName: companyName,
+		location:    location,
+		summary:     summary,
+	}
+}
+
+func cleanString(str string) {
+	fmt.Println("str", str)
 }
