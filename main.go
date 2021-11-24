@@ -10,10 +10,10 @@ var baseUrl string = "https://kr.indeed.com/jobs?q=python&limit=50"
 
 func main() {
 	pageLength := scrapper.GetPages(baseUrl)
-	var totalJobs = []scrapper.ExtractJob{}
+	var totalJobs []scrapper.ExtractJob
 	for i := 0; i < pageLength; i++ {
-		jobArr := scrapper.GetPage(baseUrl, i)
-		totalJobs = append(totalJobs, jobArr...)
+		extractedJobs := scrapper.GetPage(baseUrl, i)
+		totalJobs = append(totalJobs, extractedJobs...)
 	}
 	fmt.Println("Total jobs", len(totalJobs))
 	for _, job := range totalJobs {
