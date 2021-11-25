@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+
+	// "os"
 	"strconv"
 
 	"github.com/PuerkitoBio/goquery"
@@ -83,4 +85,10 @@ func extractedJob(card *goquery.Selection) ExtractJob {
 
 func cleanString(str string) {
 	fmt.Println("str", str)
+}
+
+func writeCsv() {
+	// file := os.WriteFile("test.csv")
+	// checkError(err)
+	// fmt.Println("file", file)
 }
