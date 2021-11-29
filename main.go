@@ -15,8 +15,9 @@ func main() {
 		extractedJobs := scrapper.GetPage(baseUrl, i)
 		totalJobs = append(totalJobs, extractedJobs...)
 	}
-	fmt.Println("Total jobs", len(totalJobs))
-	for _, job := range totalJobs {
-		fmt.Println("job", job)
-	}
+	scrapper.WriteCsv(totalJobs)
+	fmt.Println("Done.", len(totalJobs))
+	// for _, job := range totalJobs {
+	// 	fmt.Println("job", job)
+	// }
 }

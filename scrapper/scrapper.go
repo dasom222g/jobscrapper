@@ -1,11 +1,11 @@
 package scrapper
 
 import (
+	"encoding/csv"
 	"fmt"
 	"log"
 	"net/http"
-
-	// "os"
+	"os"
 	"strconv"
 
 	"github.com/PuerkitoBio/goquery"
@@ -19,6 +19,8 @@ type ExtractJob struct {
 	salary      string
 	summary     string
 }
+
+var header = []string{"id", "title", "companyName", "location", "salary", "summary"}
 
 func checkError(err error) {
 	if err != nil {
@@ -57,7 +59,7 @@ func GetPage(url string, index int) []ExtractJob {
 	checkError(err)
 	checkCode(res)
 	defer res.Body.Close()
-	fmt.Println("resultUrl!!!!", resultUrl)
+	fmt.Println("requesting! ", resultUrl)
 
 	// Load the html file
 	document, err := goquery.NewDocumentFromReader(res.Body)
@@ -73,12 +75,14 @@ func extractedJob(card *goquery.Selection) ExtractJob {
 	title := card.Find(".jobTitle>span").Text()
 	companyName := card.Find(".companyName").Text()
 	location := card.Find(".companyLocation").Text()
+	salary := card.Find(".salary-snippet").Text()
 	summary := card.Find(".job-snippet").Text()
 	return ExtractJob{
 		id:          id,
 		title:       title,
 		companyName: companyName,
 		location:    location,
+		salary:      salary,
 		summary:     summary,
 	}
 }
@@ -87,8 +91,21 @@ func cleanString(str string) {
 	fmt.Println("str", str)
 }
 
-func writeCsv() {
-	// file := os.WriteFile("test.csv")
-	// checkError(err)
-	// fmt.Println("file", file)
+func WriteCsv(jobs []ExtractJob) {
+	file, err := os.Create("jobs.csv") // file생성
+	checkError(err)
+
+	w := csv.NewWriter(file) // writer생성
+	defer w.Flush()          // file에 데이터 입력 및 저장
+
+	// 데이터 작성
+	wErr := w.Write(header)
+	checkError(wErr)
+
+	for _, job := range jobs {
+		link := "https://kr.indeed.com/viewjob?jk=" + job.id
+		jobSlice := []string{link, job.title, job.companyName, job.location, job.salary, job.summary}
+		jobWErr := w.Write(jobSlice)
+		checkError(jobWErr)
+	}
 }
