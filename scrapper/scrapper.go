@@ -52,7 +52,7 @@ func GetPages(url string) int {
 	return pageLength
 }
 
-func GetPage(url string, index int) []ExtractJob {
+func GetPage(url string, index int, mainChannel chan<- []ExtractJob) {
 	var jobs = []ExtractJob{}
 	resultUrl := url + "&start=" + strconv.Itoa(index*50)
 	res, err := http.Get(resultUrl)
@@ -61,23 +61,33 @@ func GetPage(url string, index int) []ExtractJob {
 	defer res.Body.Close()
 	fmt.Println("requesting! ", resultUrl)
 
+	// channel
+	channel := make(chan ExtractJob)
+
 	// Load the html file
 	document, err := goquery.NewDocumentFromReader(res.Body)
-	document.Find(".tapItem").Each(func(index int, card *goquery.Selection) {
-		job := extractedJob(card)
-		jobs = append(jobs, job)
+	checkError(err)
+	cards := document.Find(".tapItem")
+	cards.Each(func(index int, card *goquery.Selection) {
+		go extractedJob(card, channel)
 	})
-	return jobs
+
+	for i := 0; i < cards.Length(); i++ {
+		job := <-channel
+		jobs = append(jobs, job)
+	}
+
+	mainChannel <- jobs
 }
 
-func extractedJob(card *goquery.Selection) ExtractJob {
+func extractedJob(card *goquery.Selection, channel chan<- ExtractJob) {
 	id, _ := card.Attr("data-jk")
 	title := card.Find(".jobTitle>span").Text()
 	companyName := card.Find(".companyName").Text()
 	location := card.Find(".companyLocation").Text()
 	salary := card.Find(".salary-snippet").Text()
 	summary := card.Find(".job-snippet").Text()
-	return ExtractJob{
+	channel <- ExtractJob{
 		id:          id,
 		title:       title,
 		companyName: companyName,
