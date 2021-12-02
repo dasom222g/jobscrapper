@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os"
 	"strconv"
+	"strings"
 
 	"github.com/PuerkitoBio/goquery"
 )
@@ -20,7 +21,7 @@ type ExtractJob struct {
 	summary     string
 }
 
-var header = []string{"id", "title", "companyName", "location", "salary", "summary"}
+var header = []string{"Id", "Title", "CompanyName", "Location", "Salary", "Summary"}
 
 func checkError(err error) {
 	if err != nil {
@@ -82,11 +83,11 @@ func GetPage(url string, index int, mainChannel chan<- []ExtractJob) {
 
 func extractedJob(card *goquery.Selection, channel chan<- ExtractJob) {
 	id, _ := card.Attr("data-jk")
-	title := card.Find(".jobTitle>span").Text()
-	companyName := card.Find(".companyName").Text()
-	location := card.Find(".companyLocation").Text()
-	salary := card.Find(".salary-snippet").Text()
-	summary := card.Find(".job-snippet").Text()
+	title := cleanString(card.Find(".jobTitle>span").Text())
+	companyName := cleanString(card.Find(".companyName").Text())
+	location := cleanString(card.Find(".companyLocation").Text())
+	salary := cleanString(card.Find(".salary-snippet").Text())
+	summary := cleanString(card.Find(".job-snippet").Text())
 	channel <- ExtractJob{
 		id:          id,
 		title:       title,
@@ -97,12 +98,12 @@ func extractedJob(card *goquery.Selection, channel chan<- ExtractJob) {
 	}
 }
 
-func cleanString(str string) {
-	fmt.Println("str", str)
+func cleanString(str string) string {
+	return strings.TrimSpace(str)
 }
 
-func WriteCsv(jobs []ExtractJob) {
-	file, err := os.Create("jobs.csv") // file생성
+func WriteCsv(fileName string, jobs []ExtractJob) {
+	file, err := os.Create(fileName + "_jobs.csv") // file생성
 	checkError(err)
 
 	w := csv.NewWriter(file) // writer생성
